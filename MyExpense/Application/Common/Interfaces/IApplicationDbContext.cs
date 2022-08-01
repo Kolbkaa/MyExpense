@@ -6,7 +6,7 @@ namespace Application.Common.Interfaces;
 public interface IApplicationDbContext
 {
     DbSet<Account> Accounts { get; }
-    DbSet<Expense> Expenses { get; }
+    DbSet<Operation> Operations { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

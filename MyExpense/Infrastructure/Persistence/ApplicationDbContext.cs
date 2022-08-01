@@ -12,7 +12,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     }
 
     public DbSet<Account> Accounts => Set<Account>();
-    public DbSet<Expense> Expenses => Set<Expense>();
+    public DbSet<Operation> Operations => Set<Operation>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

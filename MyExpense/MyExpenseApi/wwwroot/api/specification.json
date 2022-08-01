@@ -60,12 +60,12 @@
         }
       }
     },
-    "/api/Expense": {
+    "/api/Operation": {
       "get": {
         "tags": [
-          "Expense"
+          "Operation"
         ],
-        "operationId": "Expense_GetExpenses",
+        "operationId": "Operation_GetOperation",
         "responses": {
           "200": {
             "description": "",
@@ -74,7 +74,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ExpenseDto"
+                    "$ref": "#/components/schemas/OperationDto"
                   }
                 }
               }
@@ -84,15 +84,15 @@
       },
       "post": {
         "tags": [
-          "Expense"
+          "Operation"
         ],
-        "operationId": "Expense_CreateExpense",
+        "operationId": "Operation_CreateOperation",
         "requestBody": {
-          "x-name": "createExpenseCommand",
+          "x-name": "createOperationCommand",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateExpenseCommand"
+                "$ref": "#/components/schemas/CreateOperationCommand"
               }
             }
           },
@@ -141,7 +141,7 @@
           }
         }
       },
-      "ExpenseDto": {
+      "OperationDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -153,6 +153,10 @@
             "type": "string",
             "nullable": true
           },
+          "value": {
+            "type": "number",
+            "format": "decimal"
+          },
           "date": {
             "type": "string",
             "format": "date-time"
@@ -162,12 +166,16 @@
           }
         }
       },
-      "CreateExpenseCommand": {
+      "CreateOperationCommand": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
           "name": {
             "type": "string"
+          },
+          "value": {
+            "type": "number",
+            "format": "decimal"
           },
           "date": {
             "type": "string",

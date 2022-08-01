@@ -4,6 +4,6 @@
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
-        public IEnumerable<Expense> Expenses { get; set; }
+        public IEnumerable<Operation> Operations { get; set; }
     }
 }

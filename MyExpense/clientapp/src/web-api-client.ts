@@ -138,12 +138,12 @@ export class AccountClient implements IAccountClient {
     }
 }
 
-export interface IExpenseClient {
-    getExpenses(): Promise<ExpenseDto[]>;
-    createExpense(createExpenseCommand: CreateExpenseCommand): Promise<string>;
+export interface IOperationClient {
+    getOperation(): Promise<OperationDto[]>;
+    createOperation(createOperationCommand: CreateOperationCommand): Promise<string>;
 }
 
-export class ExpenseClient implements IExpenseClient {
+export class OperationClient implements IOperationClient {
     private instance: AxiosInstance;
     private baseUrl: string;
     protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
@@ -156,8 +156,8 @@ export class ExpenseClient implements IExpenseClient {
 
     }
 
-    getExpenses(  cancelToken?: CancelToken | undefined): Promise<ExpenseDto[]> {
-        let url_ = this.baseUrl + "/api/Expense";
+    getOperation(  cancelToken?: CancelToken | undefined): Promise<OperationDto[]> {
+        let url_ = this.baseUrl + "/api/Operation";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: AxiosRequestConfig = {
@@ -176,11 +176,11 @@ export class ExpenseClient implements IExpenseClient {
                 throw _error;
             }
         }).then((_response: AxiosResponse) => {
-            return this.processGetExpenses(_response);
+            return this.processGetOperation(_response);
         });
     }
 
-    protected processGetExpenses(response: AxiosResponse): Promise<ExpenseDto[]> {
+    protected processGetOperation(response: AxiosResponse): Promise<OperationDto[]> {
         const status = response.status;
         let _headers: any = {};
         if (response.headers && typeof response.headers === "object") {
@@ -197,25 +197,25 @@ export class ExpenseClient implements IExpenseClient {
             if (Array.isArray(resultData200)) {
                 result200 = [] as any;
                 for (let item of resultData200)
-                    result200!.push(ExpenseDto.fromJS(item));
+                    result200!.push(OperationDto.fromJS(item));
             }
             else {
                 result200 = <any>null;
             }
-            return Promise.resolve<ExpenseDto[]>(result200);
+            return Promise.resolve<OperationDto[]>(result200);
 
         } else if (status !== 200 && status !== 204) {
             const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
         }
-        return Promise.resolve<ExpenseDto[]>(null as any);
+        return Promise.resolve<OperationDto[]>(null as any);
     }
 
-    createExpense(createExpenseCommand: CreateExpenseCommand , cancelToken?: CancelToken | undefined): Promise<string> {
-        let url_ = this.baseUrl + "/api/Expense";
+    createOperation(createOperationCommand: CreateOperationCommand , cancelToken?: CancelToken | undefined): Promise<string> {
+        let url_ = this.baseUrl + "/api/Operation";
         url_ = url_.replace(/[?&]$/, "");
 
-        const content_ = JSON.stringify(createExpenseCommand);
+        const content_ = JSON.stringify(createOperationCommand);
 
         let options_: AxiosRequestConfig = {
             data: content_,
@@ -235,11 +235,11 @@ export class ExpenseClient implements IExpenseClient {
                 throw _error;
             }
         }).then((_response: AxiosResponse) => {
-            return this.processCreateExpense(_response);
+            return this.processCreateOperation(_response);
         });
     }
 
-    protected processCreateExpense(response: AxiosResponse): Promise<string> {
+    protected processCreateOperation(response: AxiosResponse): Promise<string> {
         const status = response.status;
         let _headers: any = {};
         if (response.headers && typeof response.headers === "object") {
@@ -341,13 +341,14 @@ export interface ICreateAccountCommand {
     name?: string | undefined;
 }
 
-export class ExpenseDto implements IExpenseDto {
+export class OperationDto implements IOperationDto {
     id?: string;
     name?: string | undefined;
+    value?: number;
     date?: Date;
     account?: AccountDto;
 
-    constructor(data?: IExpenseDto) {
+    constructor(data?: IOperationDto) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -360,14 +361,15 @@ export class ExpenseDto implements IExpenseDto {
         if (_data) {
             this.id = _data["id"];
             this.name = _data["name"];
+            this.value = _data["value"];
             this.date = _data["date"] ? new Date(_data["date"].toString()) : <any>undefined;
             this.account = _data["account"] ? AccountDto.fromJS(_data["account"]) : <any>undefined;
         }
     }
 
-    static fromJS(data: any): ExpenseDto {
+    static fromJS(data: any): OperationDto {
         data = typeof data === 'object' ? data : {};
-        let result = new ExpenseDto();
+        let result = new OperationDto();
         result.init(data);
         return result;
     }
@@ -376,25 +378,28 @@ export class ExpenseDto implements IExpenseDto {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
         data["name"] = this.name;
+        data["value"] = this.value;
         data["date"] = this.date ? this.date.toISOString() : <any>undefined;
         data["account"] = this.account ? this.account.toJSON() : <any>undefined;
         return data;
     }
 }
 
-export interface IExpenseDto {
+export interface IOperationDto {
     id?: string;
     name?: string | undefined;
+    value?: number;
     date?: Date;
     account?: AccountDto;
 }
 
-export class CreateExpenseCommand implements ICreateExpenseCommand {
+export class CreateOperationCommand implements ICreateOperationCommand {
     name?: string;
+    value?: number;
     date?: Date;
     accountId?: string;
 
-    constructor(data?: ICreateExpenseCommand) {
+    constructor(data?: ICreateOperationCommand) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -406,14 +411,15 @@ export class CreateExpenseCommand implements ICreateExpenseCommand {
     init(_data?: any) {
         if (_data) {
             this.name = _data["name"];
+            this.value = _data["value"];
             this.date = _data["date"] ? new Date(_data["date"].toString()) : <any>undefined;
             this.accountId = _data["accountId"];
         }
     }
 
-    static fromJS(data: any): CreateExpenseCommand {
+    static fromJS(data: any): CreateOperationCommand {
         data = typeof data === 'object' ? data : {};
-        let result = new CreateExpenseCommand();
+        let result = new CreateOperationCommand();
         result.init(data);
         return result;
     }
@@ -421,14 +427,16 @@ export class CreateExpenseCommand implements ICreateExpenseCommand {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["name"] = this.name;
+        data["value"] = this.value;
         data["date"] = this.date ? this.date.toISOString() : <any>undefined;
         data["accountId"] = this.accountId;
         return data;
     }
 }
 
-export interface ICreateExpenseCommand {
+export interface ICreateOperationCommand {
     name?: string;
+    value?: number;
     date?: Date;
     accountId?: string;
 }
