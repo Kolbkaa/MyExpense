@@ -14,6 +14,7 @@ import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, CancelToken } fr
 export interface IAccountClient {
     getAccounts(): Promise<AccountDto[]>;
     createAccount(createAccountCommand: CreateAccountCommand): Promise<string>;
+    deleteAccount(deleteAccountCommand: DeleteAccountCommand): Promise<FileResponse>;
 }
 
 export class AccountClient implements IAccountClient {
@@ -130,11 +131,76 @@ export class AccountClient implements IAccountClient {
     
             return Promise.resolve<string>(result200);
 
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            if (Array.isArray(resultData400)) {
+                result400 = [] as any;
+                for (let item of resultData400)
+                    result400!.push(ValidationFailure.fromJS(item));
+            }
+            else {
+                result400 = <any>null;
+            }
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+
         } else if (status !== 200 && status !== 204) {
             const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
         }
         return Promise.resolve<string>(null as any);
+    }
+
+    deleteAccount(deleteAccountCommand: DeleteAccountCommand , cancelToken?: CancelToken | undefined): Promise<FileResponse> {
+        let url_ = this.baseUrl + "/api/Account";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(deleteAccountCommand);
+
+        let options_: AxiosRequestConfig = {
+            data: content_,
+            responseType: "blob",
+            method: "DELETE",
+            url: url_,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/octet-stream"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processDeleteAccount(_response);
+        });
+    }
+
+    protected processDeleteAccount(response: AxiosResponse): Promise<FileResponse> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (let k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200 || status === 206) {
+            const contentDisposition = response.headers ? response.headers["content-disposition"] : undefined;
+            const fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
+            const fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
+            return Promise.resolve({ fileName: fileName, status: status, data: new Blob([response.data], { type: response.headers["content-type"] }), headers: _headers });
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<FileResponse>(null as any);
     }
 }
 
@@ -305,6 +371,84 @@ export interface IAccountDto {
     name?: string | undefined;
 }
 
+export class ValidationFailure implements IValidationFailure {
+    propertyName?: string | undefined;
+    errorMessage?: string | undefined;
+    attemptedValue?: any | undefined;
+    customState?: any | undefined;
+    severity?: Severity;
+    errorCode?: string | undefined;
+    formattedMessagePlaceholderValues?: { [key: string]: any; } | undefined;
+
+    constructor(data?: IValidationFailure) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.propertyName = _data["propertyName"];
+            this.errorMessage = _data["errorMessage"];
+            this.attemptedValue = _data["attemptedValue"];
+            this.customState = _data["customState"];
+            this.severity = _data["severity"];
+            this.errorCode = _data["errorCode"];
+            if (_data["formattedMessagePlaceholderValues"]) {
+                this.formattedMessagePlaceholderValues = {} as any;
+                for (let key in _data["formattedMessagePlaceholderValues"]) {
+                    if (_data["formattedMessagePlaceholderValues"].hasOwnProperty(key))
+                        (<any>this.formattedMessagePlaceholderValues)![key] = _data["formattedMessagePlaceholderValues"][key];
+                }
+            }
+        }
+    }
+
+    static fromJS(data: any): ValidationFailure {
+        data = typeof data === 'object' ? data : {};
+        let result = new ValidationFailure();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["propertyName"] = this.propertyName;
+        data["errorMessage"] = this.errorMessage;
+        data["attemptedValue"] = this.attemptedValue;
+        data["customState"] = this.customState;
+        data["severity"] = this.severity;
+        data["errorCode"] = this.errorCode;
+        if (this.formattedMessagePlaceholderValues) {
+            data["formattedMessagePlaceholderValues"] = {};
+            for (let key in this.formattedMessagePlaceholderValues) {
+                if (this.formattedMessagePlaceholderValues.hasOwnProperty(key))
+                    (<any>data["formattedMessagePlaceholderValues"])[key] = (<any>this.formattedMessagePlaceholderValues)[key];
+            }
+        }
+        return data;
+    }
+}
+
+export interface IValidationFailure {
+    propertyName?: string | undefined;
+    errorMessage?: string | undefined;
+    attemptedValue?: any | undefined;
+    customState?: any | undefined;
+    severity?: Severity;
+    errorCode?: string | undefined;
+    formattedMessagePlaceholderValues?: { [key: string]: any; } | undefined;
+}
+
+export enum Severity {
+    Error = 0,
+    Warning = 1,
+    Info = 2,
+}
+
 export class CreateAccountCommand implements ICreateAccountCommand {
     name?: string | undefined;
 
@@ -339,6 +483,42 @@ export class CreateAccountCommand implements ICreateAccountCommand {
 
 export interface ICreateAccountCommand {
     name?: string | undefined;
+}
+
+export class DeleteAccountCommand implements IDeleteAccountCommand {
+    accountId?: string;
+
+    constructor(data?: IDeleteAccountCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.accountId = _data["accountId"];
+        }
+    }
+
+    static fromJS(data: any): DeleteAccountCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new DeleteAccountCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["accountId"] = this.accountId;
+        return data;
+    }
+}
+
+export interface IDeleteAccountCommand {
+    accountId?: string;
 }
 
 export class OperationDto implements IOperationDto {
@@ -439,6 +619,13 @@ export interface ICreateOperationCommand {
     value?: number;
     date?: Date;
     accountId?: string;
+}
+
+export interface FileResponse {
+    data: Blob;
+    status: number;
+    fileName?: string;
+    headers?: { [name: string]: any };
 }
 
 export class SwaggerException extends Error {

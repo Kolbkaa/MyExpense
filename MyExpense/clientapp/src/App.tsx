@@ -1,26 +1,25 @@
-import React from 'react';
-import logo from './logo.svg';
+import { Card } from 'primereact/card';
+import React, { useState } from 'react';
+import {
+    BrowserRouter as Router,
+    Routes,
+    Route,
+} from 'react-router-dom';
 import './App.css';
+import AddAccount from './Area/Administration/AddAccount/AddAccount';
+import ShowAccount from './Area/Administration/ShowAccounts/ShowAccounts';
+import Menu from './Menu/Menu';
+import { AddAccountPath, ShowAccountPath } from './Shared/RouterPath';
 
 function App() {
-    return (
-        <div className="App">
-            <header className="App-header">
-                <img src={logo} className="App-logo" alt="logo" />
-                <p>
-                    Edit <code>src/App.tsx</code> and save to reload.
-                </p>
-                <a
-                    className="App-link"
-                    href="https://reactjs.org"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    Learn React
-                </a>
-            </header>
-        </div>
-    );
+    return <><Menu />
+    <Card>
+        <Routes>
+            <Route path={ShowAccountPath} element={< ShowAccount />}></Route>
+            <Route path={AddAccountPath} element={< AddAccount />}></Route>
+        </Routes>
+        </Card>
+    </>
 }
 
 export default App;

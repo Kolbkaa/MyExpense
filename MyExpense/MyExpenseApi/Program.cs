@@ -1,4 +1,5 @@
 using Application;
+using Application.DI;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,8 @@ builder.Services.AddOpenApiDocument(settings =>
     settings.Version = "v1";
 });
 
+builder.Services.AddApplication();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -29,5 +32,6 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+//app.UseCors("AllowCors");
 
 app.Run();
